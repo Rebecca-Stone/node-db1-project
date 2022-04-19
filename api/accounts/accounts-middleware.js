@@ -1,29 +1,50 @@
-// #### Write Middleware
-// - Write the following middlewares inside `api/accounts/accounts-middleware.js`:
+const Account = require("./accounts-model");
 
-// const Account = require('./accounts-model');
+function checkAccountPayload(req, res, next) {
+  let { name, budget } = req.body;
+  let budgetCheck = isNaN(budget);
 
-//   - `checkAccountPayload` returns a status 400 with if `req.body` is invalid:
-exports.checkAccountPayload = (req, res, next) => {
-  // DO YOUR MAGIC
+  if (!name || !budget) {
+    res.status(400).json({ message: "name and budget are required" })
+  } else if (name.trim().length < 3 || name.trim().length > 100) {
+    
+    res.status(400).json({ message: "name of account must be between 3 and 100" })
+  } else if (budgetCheck === true) {
+    res.status(400).json({ message: "must be a number" })
 
-  // Note: you can either write "manual" validation logic
-  // or use the Yup library (not currently installed)
 
-  //     - If either name or budget are undefined, return `{ message: "name and budget are required" }`
-  //     - If the _trimmed_ name is shorter than 3 or longer than 100, return `{ message: "name of account must be between 3 and 100" }`
-  //     - If budget is not able to be converted into a number, return `{ message: "budget of account must be a number" }`
-  //     - If budget is a negative number or over one million, return  `{ message: "budget of account is too large or too small" }`
+  } else if (Number(budget < 0) || Number(budget) > 1000000) {
+    res.status(400).json({ message: "too large or too small" })
+  } else {
+    next();
+  }
+
+}
+
+async function checkAccountNameUnique(req, res, next) {
+  Account.getByName(req.body.name)
+    .then((account) => {
+      if (account) {
+        res.status(400).json({ message: "name is taken"})
+      }
+    })
+  next();
+}
+
+function checkAccountId(req, res, next) {
+  Account.getById(req.params.id)
+    .then((account) => {
+      if (account) {
+        req.account = account;
+        next();
+      } else {
+        res.status(404).json({ message: "account not found" });
+      }
+    })
+}
+
+module.exports = {
+  checkAccountPayload,
+  checkAccountNameUnique,
+  checkAccountId,
 };
-
-//   - `checkAccountNameUnique` returns a status 400 with a `{ message: "that name is taken" }` if the _trimmed_ `req.body.name` already exists in the database
-exports.checkAccountNameUnique = (req, res, next) => {
-  // DO YOUR MAGIC
-};
-
-//   - `checkAccountId` returns a status 404 with a `{ message: "account not found" }` if `req.params.id` does not exist in the database
-exports.checkAccountId = (req, res, next) => {
-  // DO YOUR MAGIC
-};
-
-
