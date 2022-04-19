@@ -10,8 +10,8 @@ const router = express.Router();
 
 router.get("/", async (req, res, next) => {
   try {
-    const data = await Account.getAll();
-    res.status(201).json(data);
+    const allAccounts = await Account.getAll();
+    res.status(201).json(allAccounts);
   } catch (err) {
     next(err);
   }
@@ -19,8 +19,8 @@ router.get("/", async (req, res, next) => {
 
 router.get("/:id", checkAccountId, async (req, res, next) => {
   try {
-    const data = await Account.getById(req.params.id);
-    res.status(201).json(data);
+    const account = await Account.getById(req.params.id);
+    res.status(201).json(account);
   } catch (err) {
     next(err);
   }
@@ -34,8 +34,11 @@ router.post(
     let { name, budget } = req.body;
     let trimmedName = name.trim();
     try {
-      const data = await Account.create({ name: trimmedName, budget: budget });
-      res.status(201).json(data);
+      const newAccount = await Account.create({
+        name: trimmedName,
+        budget: budget,
+      });
+      res.status(201).json(newAccount);
     } catch (err) {
       next(err);
     }
@@ -46,10 +49,11 @@ router.put(
   "/:id",
   checkAccountId,
   checkAccountPayload,
+  checkAccountNameUnique,
   async (req, res, next) => {
     try {
-      const data = await Account.updateById(req.params.id, req.body);
-      res.status(200).json(data);
+      const updatedAccount = await Account.updateById(req.params.id, req.body);
+      res.status(200).json(updatedAccount);
     } catch (err) {
       next(err);
     }
@@ -58,8 +62,8 @@ router.put(
 
 router.delete("/:id", checkAccountId, async (req, res, next) => {
   try {
-    const data = await Account.deleteById(req.params.id);
-    res.json(data);
+    await Account.deleteById(req.params.id);
+    res.json(req.account);
   } catch (err) {
     next(err);
   }
